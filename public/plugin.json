@@ -1,0 +1,43 @@
+{
+    "main": "index.html",
+    "logo": "logo.png",
+    "preload": "preload.js",
+    "platform": [
+        "win32"
+    ],
+    "development": {
+        "main": "http://localhost:5173/"
+    },
+    "features": [
+        {
+            "code": "main",
+            "explain": "主要功能",
+            "cmds": [
+                "视频下载器",
+                "video download",
+                "下载视频"
+            ]
+        },
+        {
+            "code": "download",
+            "explain": "下载视频",
+            "cmds": [
+                {
+                    "type": "window",
+                    "label": "下载B站视频",
+                    "match": {
+                        "app": [
+                            "msedge.exe"
+                        ],
+                        "title": "/.+_哔哩哔哩_bilibili.+/"
+                    }
+                },
+                {
+                    "type": "regex",
+                    "label": "下载B站视频",
+                    "match": "/https:\/\/www\\.bilibili\\.com\/video\/\\w+/i"
+                }
+            ]
+        }
+    ]
+}
