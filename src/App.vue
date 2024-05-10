@@ -57,18 +57,19 @@ function renderIcon(icon: Component) {
 }
 
 let collapsed = ref(false);
-let activeKey = ref("main");
+let activeKey = ref("home");
 const router = useRouter();
 
 router.afterEach((to, from, failure) => {
   const routeName = to.name as string;
+  console.log(routeName)
   activeKey.value = routeName;
 });
 
 const menuOptions: MenuOption[] = [
   {
     label: () => h(RouterLink, { to: "/" }, () => "主页"),
-    key: "main",
+    key: "home",
     icon: renderIcon(HomeIcon),
   },
   {
