@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 
-defineProps<{ msg: string }>()
+let msg = 'Hello Vite + Vue 3.0'
 
 const count = ref(0)
 </script>
