@@ -25,7 +25,9 @@
       <n-layout>
         <n-dialog-provider>
           <n-config-provider>
-            <router-view></router-view>
+            <n-loading-bar-provider>
+              <router-view></router-view>
+            </n-loading-bar-provider>
           </n-config-provider>
         </n-dialog-provider>
       </n-layout>
@@ -37,13 +39,13 @@
 import { h, Component, ref } from "vue";
 import {
   NIcon,
-  useMessage,
   MenuOption,
   NLayout,
   NLayoutSider,
   NMenu,
   NDialogProvider,
   NConfigProvider,
+  NLoadingBarProvider,
 } from "naive-ui";
 import { RouterLink, useRouter } from "vue-router";
 import {
@@ -62,7 +64,6 @@ const router = useRouter();
 
 router.afterEach((to, from, failure) => {
   const routeName = to.name as string;
-  console.log(routeName)
   activeKey.value = routeName;
 });
 
