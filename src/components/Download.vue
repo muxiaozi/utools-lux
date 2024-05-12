@@ -16,14 +16,16 @@
     :columns="columns"
     :data="data"
     default-expand-all
-    :row-key="(row: RowData) => row.id"
+    :bordered="false"
+    :row-key="(row: RowData) => row.key"
+    @update-checked-row-keys="updateCheckedRowKeys"
     :max-height="`calc(100vh - 142px)`"
   />
 </template>
 
 <script setup lang="ts">
 import { useRoute } from "vue-router";
-import { ref } from "vue";
+import { ref, h } from "vue";
 import {
   NDataTable,
   DataTableColumns,
@@ -32,13 +34,19 @@ import {
   NButton,
   NIcon,
   useLoadingBar,
+  DataTableRowKey,
+  NRadioGroup,
+  NRadio,
 } from "naive-ui";
 import { DownloadSharp as DownloadIcon } from "@vicons/ionicons5";
+import { InternalRowData } from "naive-ui/es/data-table/src/interface";
 
 const route = useRoute();
 let query = route.query;
 let url = decodeURIComponent(query["url"] as string);
+
 const loadingBar = useLoadingBar();
+const checkedRowKeys = ref<DataTableRowKey[]>([]);
 
 loadingBar.start();
 fetchVideoInfo(url, true)
@@ -52,45 +60,119 @@ fetchVideoInfo(url, true)
   });
 
 type RowData = {
-  id: string;
+  key: string;
+  url: string;
   title: string;
-  streamIndex?: string;
-  children?: RowData[];
+  selected: boolean;
+  selectedStream: string;
+  streams: { label: string; value: string }[];
 };
 
-const data = ref<RowData[]>();
+type DownloadInfo = {
+  url: string;
+  streamIndex: string;
+};
+
+const downloadInfoMap: Map<string, DownloadInfo> = new Map();
+
+const data = ref<RowData[]>([]);
+
+function updateCheckedRowKeys(
+  keys: DataTableRowKey[],
+  rows: InternalRowData[],
+  meta: {
+    row: InternalRowData | undefined;
+    action: "check" | "uncheck" | "checkAll" | "uncheckAll";
+  }
+) {
+  checkedRowKeys.value = keys;
+  if (meta.action === "check") {
+    (meta.row as RowData).selected = true;
+  } else if (meta.action === "uncheck") {
+    (meta.row as RowData).selected = false;
+  } else if (meta.action === "checkAll") {
+    for (let row of data.value) {
+      (row as RowData).selected = true;
+    }
+  } else if (meta.action === "uncheckAll") {
+    for (let row of data.value) {
+      (row as RowData).selected = false;
+    }
+  }
+}
+
+function renderQualitySelecor(rowData: RowData) {
+  return h(
+    NRadioGroup,
+    {
+      value: rowData.selectedStream,
+      name: rowData.key,
+      disabled: !rowData.selected,
+      "onUpdate:value": (value: string) => {
+        rowData.selectedStream = value;
+        downloadInfoMap.set(rowData.key, {
+          url: rowData.url,
+          streamIndex: value,
+        });
+      },
+    },
+    {
+      default: () => {
+        return h(NSpace, null, {
+          default: () => {
+            return rowData.streams.map((stream) => {
+              return h(NRadio, {
+                key: stream.value,
+                label: stream.label,
+                value: stream.value,
+              });
+            });
+          },
+        });
+      },
+    }
+  );
+}
+
+const title = ref<string>();
 
 const columns: DataTableColumns<RowData> = [
   {
     type: "selection",
   },
   {
-    title: "视频标题",
+    type: "expand",
+    renderExpand: renderQualitySelecor,
+  },
+  {
+    title: title.value,
     key: "title",
   },
 ];
 
 function download() {
-  downloadVideo("https://www.bilibili.com/video/av21877586", ["16-12"])
-    .then((result) => {
-      console.log(result);
-      loadingBar.finish();
-    })
-    .catch((e) => {
-      console.error(e.message);
-      loadingBar.error();
-    });
+  for (let key of checkedRowKeys.value) {
+    let downloadInfo = downloadInfoMap.get(key.toString());
+    if (downloadInfo) {
+      console.log(downloadInfo);
+    }
+  }
+  // downloadVideo("https://www.bilibili.com/video/av21877586", ["16-12"])
+  //   .then((result) => {
+  //     console.log(result);
+  //     loadingBar.finish();
+  //   })
+  //   .catch((e) => {
+  //     console.error(e.message);
+  //     loadingBar.error();
+  //   });
 }
 
 async function fetchVideoInfo(
   url: string,
   playlist: boolean
 ): Promise<RowData[]> {
-  let command = [
-    "C:/Users/huhongwei/Downloads/lux_0.24.1_Windows_x86_64/lux.exe",
-    "-i",
-    "-j",
-  ];
+  let command = ["lux.exe", "-i", "-j"];
   if (playlist) {
     command.push("-p");
   }
@@ -102,23 +184,29 @@ async function fetchVideoInfo(
 
   let result: RowData[] = [];
   for (let videoInfo of jsonResult) {
-    let jsonStreams: RowData[] = [];
+    let jsonStreams = [];
     let streams = videoInfo["streams"];
+
     for (let streamKey in streams) {
-      let stream = streams[streamKey];
-      let jsonStream: RowData = {
-        id: videoInfo["title"] + streamKey,
-        streamIndex: streamKey,
-        title: stream["quality"],
-      };
-      jsonStreams.push(jsonStream);
+      jsonStreams.push({
+        value: streamKey,
+        label: streams[streamKey]["quality"],
+      });
     }
 
     let item: RowData = {
-      id: videoInfo["title"],
+      key: videoInfo["title"],
+      url: videoInfo["url"],
       title: videoInfo["title"],
-      children: jsonStreams,
+      selected: false,
+      selectedStream: jsonStreams[0].value, // 默认选择第一个
+      streams: jsonStreams,
     };
+
+    downloadInfoMap.set(item.key, {
+      url: item.url,
+      streamIndex: item.selectedStream,
+    });
 
     result.push(item);
   }
@@ -127,14 +215,7 @@ async function fetchVideoInfo(
 }
 
 async function downloadVideo(url: string, streams: string[]): Promise<string> {
-  let command = [
-    "C:/Users/huhongwei/Downloads/lux_0.24.1_Windows_x86_64/lux.exe",
-    "-o",
-    "D:/",
-    "-f",
-    ...streams,
-    url,
-  ];
+  let command = ["lux.exe", "-o", "D:/", "-f", ...streams, url];
   let result = await runCommand(command);
   console.log(result);
   return result;
