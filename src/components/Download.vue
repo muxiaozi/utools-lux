@@ -1,14 +1,23 @@
 <template>
   <n-page-header title="下载视频" class="header">
     <template #extra>
-      <n-space>
-        <n-button @click="download" :round="true" size="small">
+      <n-flex align="center">
+        <n-switch
+          :rubber-band="false"
+          :value="usePlaylist"
+          :loading="switchPlaylistPending"
+          @update:value="switchPlaylist"
+        >
+          <template #checked> 列表 </template>
+          <template #unchecked> 单个 </template>
+        </n-switch>
+        <n-button @click="download" size="small">
           <template #icon>
             <n-icon :component="DownloadIcon" />
           </template>
           <template #default>下载</template>
         </n-button>
-      </n-space>
+      </n-flex>
     </template>
   </n-page-header>
 
@@ -30,26 +39,29 @@ import {
   NDataTable,
   DataTableColumns,
   NPageHeader,
-  NSpace,
+  NFlex,
   NButton,
   NIcon,
   useLoadingBar,
   DataTableRowKey,
   NRadioGroup,
   NRadio,
+  NSwitch,
 } from "naive-ui";
 import { DownloadSharp as DownloadIcon } from "@vicons/ionicons5";
 import { InternalRowData } from "naive-ui/es/data-table/src/interface";
 
 const route = useRoute();
 let query = route.query;
-let url = decodeURIComponent(query["url"] as string);
+const url = decodeURIComponent(query["url"] as string);
+const usePlaylist = ref(false);
+const switchPlaylistPending = ref(false);
 
 const loadingBar = useLoadingBar();
 const checkedRowKeys = ref<DataTableRowKey[]>([]);
 
 loadingBar.start();
-fetchVideoInfo(url, true)
+fetchVideoInfo(url, false)
   .then((result) => {
     data.value = result;
     loadingBar.finish();
@@ -74,12 +86,43 @@ type DownloadInfo = {
 };
 
 const downloadInfoMap: Map<string, DownloadInfo> = new Map();
-
 const data = ref<RowData[]>([]);
+
+let videoInfoCache: {
+  singleVideoInfo: RowData[] | undefined;
+  playlistVideoInfo: RowData[] | undefined;
+} = { singleVideoInfo: undefined, playlistVideoInfo: undefined };
+
+function switchPlaylist(value: boolean) {
+  if (value && videoInfoCache.playlistVideoInfo) {
+    data.value = videoInfoCache.playlistVideoInfo;
+    usePlaylist.value = value;
+    return;
+  } else if (!value && videoInfoCache.singleVideoInfo) {
+    data.value = videoInfoCache.singleVideoInfo;
+    usePlaylist.value = value;
+    return;
+  } else {
+    switchPlaylistPending.value = true;
+    loadingBar.start();
+    fetchVideoInfo(url, value)
+      .then((result) => {
+        data.value = result;
+        loadingBar.finish();
+        usePlaylist.value = value;
+        switchPlaylistPending.value = false;
+      })
+      .catch((e) => {
+        console.error(e.message);
+        loadingBar.error();
+        switchPlaylistPending.value = false;
+      });
+  }
+}
 
 function updateCheckedRowKeys(
   keys: DataTableRowKey[],
-  rows: InternalRowData[],
+  _rows: InternalRowData[],
   meta: {
     row: InternalRowData | undefined;
     action: "check" | "uncheck" | "checkAll" | "uncheckAll";
@@ -118,7 +161,7 @@ function renderQualitySelecor(rowData: RowData) {
     },
     {
       default: () => {
-        return h(NSpace, null, {
+        return h(NFlex, null, {
           default: () => {
             return rowData.streams.map((stream) => {
               return h(NRadio, {
@@ -134,7 +177,7 @@ function renderQualitySelecor(rowData: RowData) {
   );
 }
 
-const title = ref<string>();
+const mainTitle = ref<string>();
 
 const columns: DataTableColumns<RowData> = [
   {
@@ -145,7 +188,7 @@ const columns: DataTableColumns<RowData> = [
     renderExpand: renderQualitySelecor,
   },
   {
-    title: title.value,
+    title: "视频标题",
     key: "title",
   },
 ];
@@ -182,6 +225,10 @@ async function fetchVideoInfo(
     return [];
   }
 
+  if (!playlist) {
+    mainTitle.value = jsonResult[0]["title"];
+  }
+
   let result: RowData[] = [];
   for (let videoInfo of jsonResult) {
     let jsonStreams = [];
@@ -194,10 +241,15 @@ async function fetchVideoInfo(
       });
     }
 
+    let title = videoInfo["title"];
+    if (playlist && mainTitle.value) {
+      title = title.replace(mainTitle.value, "");
+    }
+
     let item: RowData = {
       key: videoInfo["title"],
       url: videoInfo["url"],
-      title: videoInfo["title"],
+      title: title,
       selected: false,
       selectedStream: jsonStreams[0].value, // 默认选择第一个
       streams: jsonStreams,
@@ -209,6 +261,12 @@ async function fetchVideoInfo(
     });
 
     result.push(item);
+  }
+
+  if (!playlist) {
+    videoInfoCache.singleVideoInfo = result;
+  } else {
+    videoInfoCache.playlistVideoInfo = result;
   }
 
   return result;
