@@ -1,6 +1,6 @@
 import { createRouter, createMemoryHistory } from "vue-router";
 
-import Home from "../components/HelloWorld.vue";
+import Home from "../components/Home.vue";
 import Download from "../components/Download.vue";
 import Setting from "../components/Setting.vue";
 

@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "follow-redirects": "^1.15.6",
+    "loadash": "^1.0.0",
     "teen_process": "^2.1.1",
     "vue": "^3.4.21",
     "vue-router": "^4.3.2"
