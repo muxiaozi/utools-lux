@@ -15,7 +15,10 @@
           placeholder="请输入 lux 程序路径"
           readonly
         />
-        <n-button @click="handleSelectLuxPath">选择...</n-button>
+        <n-button-group>
+          <n-button @click="handleSelectLuxPath">选择...</n-button>
+          <n-button @click="handleDownloadLux">下载</n-button>
+        </n-button-group>
       </n-flex>
     </n-form-item>
     <n-form-item label="视频文件夹" path="outputDir">
@@ -25,7 +28,10 @@
           placeholder="请输入视频文件夹路径"
           readonly
         />
-        <n-button @click="handleSelectOutputDir">选择...</n-button>
+        <n-button-group>
+          <n-button @click="handleSelectOutputDir">选择...</n-button>
+          <n-button @click="handleOpenOutputDir">打开</n-button>
+        </n-button-group>
       </n-flex>
     </n-form-item>
     <!-- <n-form-item label="优先分辨率" path="quality">
@@ -68,6 +74,7 @@ import {
   NForm,
   NFormItem,
   NInput,
+  NButtonGroup,
   NButton,
   NFlex,
   NRadioGroup,
@@ -101,6 +108,10 @@ function handleSelectLuxPath() {
   }
 }
 
+function handleDownloadLux() {
+  utools.shellOpenExternal("https://github.com/iawia002/lux/releases");
+}
+
 function handleSelectOutputDir() {
   let path = utools.showOpenDialog({
     title: "选择视频文件夹",
@@ -108,6 +119,12 @@ function handleSelectOutputDir() {
   });
   if (path) {
     setting.outputDir = path[0];
+  }
+}
+
+function handleOpenOutputDir() {
+  if (setting.outputDir) {
+    utools.shellOpenPath(setting.outputDir);
   }
 }
 </script>
