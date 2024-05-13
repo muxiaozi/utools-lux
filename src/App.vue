@@ -62,7 +62,7 @@ let collapsed = ref(false);
 let activeKey = ref("home");
 const router = useRouter();
 
-router.afterEach((to, from, failure) => {
+router.afterEach((to, _from, _failure) => {
   const routeName = to.name as string;
   activeKey.value = routeName;
 });

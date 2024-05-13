@@ -77,25 +77,23 @@ import {
   NButtonGroup,
   NButton,
   NFlex,
-  NRadioGroup,
-  NRadioButton,
   NDynamicInput,
 } from "naive-ui";
 import { setting } from "../utils/store";
 
-const qualityOptions = [
-  { label: "4K", value: "4k" },
-  { label: "2K", value: "2k" },
-  { label: "1080P", value: "1080p" },
-  { label: "720P", value: "720p" },
-  { label: "480P", value: "480p" },
-  { label: "360P", value: "360p" },
-];
+// const qualityOptions = [
+//   { label: "4K", value: "4k" },
+//   { label: "2K", value: "2k" },
+//   { label: "1080P", value: "1080p" },
+//   { label: "720P", value: "720p" },
+//   { label: "480P", value: "480p" },
+//   { label: "360P", value: "360p" },
+// ];
 
-const codecOptions = [
-  { label: "H.264", value: "h264" },
-  { label: "H.265", value: "h265" },
-];
+// const codecOptions = [
+//   { label: "H.264", value: "h264" },
+//   { label: "H.265", value: "h265" },
+// ];
 
 function handleSelectLuxPath() {
   let path = utools.showOpenDialog({
