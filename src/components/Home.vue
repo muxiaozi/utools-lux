@@ -11,6 +11,7 @@
 import { ref } from "vue";
 import { useRouter } from "vue-router";
 import { NFlex, NInput, NButton } from "naive-ui";
+import { cleanupUrl } from "../utils/util";
 
 const url = ref("");
 const router = useRouter();
@@ -19,7 +20,7 @@ function handleDownload() {
   router.push({
     name: "download",
     query: {
-      url: encodeURIComponent(url.value),
+      url: cleanupUrl(url.value),
     },
   });
 }
