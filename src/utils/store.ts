@@ -3,6 +3,7 @@ import * as _ from "lodash";
 
 type Setting = {
   luxPath: string;
+  ffmpegPath: string;
   outputDir: string;
   quality: string;
   codec: string;
@@ -14,6 +15,7 @@ type Setting = {
 
 const defaultSetting: Setting = {
   luxPath: "lux.exe",
+  ffmpegPath: "ffmpeg.exe",
   outputDir: "",
   quality: "1080p",
   codec: "h265",

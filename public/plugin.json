@@ -8,8 +8,8 @@
   },
   "features": [
     {
-      "code": "main",
-      "explain": "主要功能",
+      "code": "home",
+      "explain": "主页",
       "cmds": ["视频下载器", "video download", "下载视频"]
     },
     {

@@ -241,16 +241,19 @@ async function download() {
 
   if (usePlaylist.value) {
     for (let key of checkedRowKeys.value) {
-      downloadButtonContent.value = `${downloadIndex} / ${checkedRowKeys.value.length}`;
+      downloadButtonContent.value = `${downloadIndex} / ${checkedRowKeys.value.length} (0%)`;
 
       let downloadInfo = downloadInfoMap.get(key.toString());
       console.log("download key: ", key.toString(), downloadInfo);
       if (downloadInfo) {
         try {
-          await downloadVideo(
+          await downloadVideoProxy(
             downloadInfo.url,
             [downloadInfo.streamIndex],
-            downloadInfo.playlistItemIndex.toString()
+            downloadInfo.playlistItemIndex.toString(),
+            (progress) => {
+              downloadButtonContent.value = `${downloadIndex} / ${checkedRowKeys.value.length} (${progress}%)`;
+            }
           );
           downloadSuccessCount++;
         } catch (e) {
@@ -262,13 +265,20 @@ async function download() {
     }
   } else {
     for (let key of checkedRowKeys.value) {
-      downloadButtonContent.value = `${downloadIndex} / ${checkedRowKeys.value.length}`;
+      downloadButtonContent.value = `${downloadIndex} / ${checkedRowKeys.value.length} (0%)`;
 
       let downloadInfo = downloadInfoMap.get(key.toString());
       console.log("download key: ", key.toString(), downloadInfo);
       if (downloadInfo) {
         try {
-          await downloadVideo(downloadInfo.url, [downloadInfo.streamIndex]);
+          await downloadVideoProxy(
+            downloadInfo.url,
+            [downloadInfo.streamIndex],
+            undefined,
+            (progress) => {
+              downloadButtonContent.value = `${downloadIndex} / ${checkedRowKeys.value.length} (${progress}%)`;
+            }
+          );
           downloadSuccessCount++;
         } catch (e) {
           console.error(e);
@@ -363,10 +373,11 @@ async function fetchVideoInfo(
   return result;
 }
 
-async function downloadVideo(
+async function downloadVideoProxy(
   url: string,
   streams: string[],
-  playlistItems?: string
+  playlistItems?: string,
+  onProgress?: (progress: number) => void
 ): Promise<string> {
   let command = [setting.luxPath, "-o", setting.outputDir, "-f", ...streams];
   let cookie = getCookie(url);
@@ -378,8 +389,25 @@ async function downloadVideo(
     command.push("--items", playlistItems);
   }
   console.log("download command: ", command);
-  let result = await runCommand([...command, url]);
-  return result;
+  return new Promise((resolve, reject) => {
+    const proc = downloadVideo([...command, url]);
+    proc.on("finish", (code, stdout, stderr) => {
+      if (code === 0) {
+        resolve(stdout);
+      } else {
+        reject(new Error(stderr));
+      }
+    });
+    proc.on("error", (err) => {
+      reject(err);
+    });
+    proc.on("progress", (progress: number) => {
+      if (onProgress) {
+        onProgress(progress);
+      }
+      console.log("progress: ", progress);
+    });
+  });
 }
 </script>
 

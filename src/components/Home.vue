@@ -16,6 +16,11 @@ const url = ref("");
 const router = useRouter();
 
 function handleDownload() {
-  router.push(`/download?url=${encodeURIComponent(url.value)}`);
+  router.push({
+    name: "download",
+    query: {
+      url: encodeURIComponent(url.value),
+    },
+  });
 }
 </script>

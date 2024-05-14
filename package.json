@@ -5,13 +5,11 @@
   "type": "commonjs",
   "scripts": {
     "dev": "vite",
-    "build": "vue-tsc && vite build && npm install --prefix dist teen_process",
+    "build": "vue-tsc && vite build",
     "preview": "vite preview"
   },
   "dependencies": {
     "loadash": "^1.0.0",
-    "teen_process": "^2.1.1",
-    "vconsole": "^3.15.1",
     "vue": "^3.4.21",
     "vue-router": "^4.3.2"
   },

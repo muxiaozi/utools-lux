@@ -2,14 +2,10 @@ import { createApp } from "vue";
 import "./style.css";
 import App from "./App.vue";
 import router from "./router";
-import VConsole from "vconsole";
 
 const app = createApp(App);
 app.use(router);
 app.mount("#app");
-
-const vconsole = new VConsole();
-vconsole.hide();
 
 utools.onPluginEnter(async ({ code, type, payload }) => {
   console.log("onPluginEnter", code, type, payload);
