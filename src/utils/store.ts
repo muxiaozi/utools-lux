@@ -37,12 +37,16 @@ if (!_setting) {
   Object.assign(setting, { outputDir: utools.getPath("videos") });
   utools.dbStorage.setItem(settingKey, _.cloneDeep(setting));
   // 寻找系统中的 lux 和 ffmpeg
-  try {
-    setting.luxPath = await where("lux");
-  } catch (ignored) {}
-  try {
-    setting.ffmpegPath = await where("ffmpeg");
-  } catch (ignored) {}
+  where("lux")
+    .then((path) => {
+      setting.luxPath = path;
+    })
+    .catch();
+  where("ffmpeg")
+    .then((path) => {
+      setting.ffmpegPath = path;
+    })
+    .catch();
 } else {
   Object.assign(setting, _setting);
 }
