@@ -89,7 +89,7 @@ const data = ref<RowData[]>([]);
 const downloadButtonContent = ref("下载");
 const dialog = useDialog();
 const router = useRouter();
-const columns: DataTableColumns<RowData> = [
+const columns = ref<DataTableColumns<RowData>>([
   {
     type: "selection",
   },
@@ -98,10 +98,15 @@ const columns: DataTableColumns<RowData> = [
     renderExpand: renderQualitySelecor,
   },
   {
-    title: "视频标题",
     key: "title",
+    title() {
+      return h("span", mainTitle.value);
+    },
+    ellipsis: {
+      tooltip: true,
+    },
   },
-];
+]);
 const videoInfoCache: {
   singleVideoInfo: RowData[] | undefined;
   playlistVideoInfo: RowData[] | undefined;
@@ -136,9 +141,9 @@ onMounted(() => {
     });
     return;
   }
-  
+
   if (route.query.url) {
-    videoUrl = decodeURIComponent(route.query.url as string);
+    videoUrl = route.query.url as string;
     console.log("download Url: ", videoUrl);
     switchPlaylist(false);
   }

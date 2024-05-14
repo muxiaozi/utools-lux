@@ -2,6 +2,7 @@ import { createApp } from "vue";
 import "./style.css";
 import App from "./App.vue";
 import router from "./router";
+import { cleanupUrl } from "./utils/util";
 
 const app = createApp(App);
 app.use(router);
@@ -17,7 +18,7 @@ utools.onPluginEnter(async ({ code, type, payload }) => {
         router.push({
           name: "download",
           query: {
-            url: encodeURIComponent(url),
+            url: cleanupUrl(url),
           },
         });
         break;
@@ -26,7 +27,7 @@ utools.onPluginEnter(async ({ code, type, payload }) => {
         router.push({
           name: "download",
           query: {
-            url: encodeURIComponent(payload),
+            url: cleanupUrl(payload),
           },
         });
         break;
