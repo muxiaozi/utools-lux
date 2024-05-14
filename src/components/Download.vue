@@ -40,7 +40,7 @@
 </template>
 
 <script setup lang="ts">
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { ref, h, watch, onMounted } from "vue";
 import {
   NDataTable,
@@ -88,6 +88,7 @@ const mainTitle = ref<string>();
 const data = ref<RowData[]>([]);
 const downloadButtonContent = ref("下载");
 const dialog = useDialog();
+const router = useRouter();
 const columns: DataTableColumns<RowData> = [
   {
     type: "selection",
@@ -124,6 +125,18 @@ watch(
 );
 
 onMounted(() => {
+  if (setting.luxPath === "" || setting.ffmpegPath === "") {
+    dialog.warning({
+      title: "程序路径未设置",
+      content: "请先设置 lux 与 ffmpeg 程序路径",
+      positiveText: "设置",
+      onPositiveClick: () => {
+        router.push({ name: "setting" });
+      },
+    });
+    return;
+  }
+  
   if (route.query.url) {
     videoUrl = decodeURIComponent(route.query.url as string);
     console.log("download Url: ", videoUrl);
@@ -390,7 +403,9 @@ async function downloadVideoProxy(
   }
   console.log("download command: ", command);
   return new Promise((resolve, reject) => {
-    const proc = downloadVideo([...command, url]);
+    const proc = downloadVideo([...command, url], {
+      ffmpegPath: setting.ffmpegPath,
+    });
     proc.on("finish", (code, stdout, stderr) => {
       if (code === 0) {
         resolve(stdout);

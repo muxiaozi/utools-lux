@@ -13,6 +13,13 @@ interface DownloadProcess {
   stop(): void;
 }
 
+interface DownloadVideoInfo {
+  ffmpegPath: string;
+}
+
 declare function runCommand(command: string[]): Promise<string>;
 
-declare function downloadVideo(command): DownloadProcess;
+declare function downloadVideo(
+  command: string[],
+  options: DownloadVideoInfo
+): DownloadProcess;

@@ -1,4 +1,6 @@
 const child_process = require("node:child_process");
+const fs = require("node:fs");
+const path = require("node:path");
 
 async function runCommand(command) {
   return new Promise((resolve, reject) => {
@@ -16,8 +18,14 @@ async function runCommand(command) {
   });
 }
 
-function downloadVideo(command) {
-  let proc = child_process.spawn(command[0], command.slice(1));
+function downloadVideo(command, options) {
+  let proc = child_process.spawn(command[0], command.slice(1), {
+    env: {
+      PATH: `${path.dirname(options.ffmpegPath)}${path.delimiter}${
+        process.env.PATH
+      }`,
+    },
+  });
   let stdout = "";
   let stderr = "";
   const callbackMap = new Map();
@@ -27,7 +35,6 @@ function downloadVideo(command) {
     if (cb) {
       cb(err);
     }
-    console.log("Error: ", err);
   });
 
   proc.stdout.on("data", (data) => {
@@ -54,7 +61,6 @@ function downloadVideo(command) {
         cb(progress[8]);
       }
     }
-    console.log("stderr: ", data.toString(), progress);
   });
 
   proc.on("close", (code) => {
@@ -62,7 +68,6 @@ function downloadVideo(command) {
     if (cb) {
       cb(code, stdout, stderr);
     }
-    console.log("close: ", code, ", stdout:", stdout, ", stderr:", stderr);
   });
 
   /**
