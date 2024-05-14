@@ -7,7 +7,7 @@
           :value="usePlaylist"
           :loading="switchPlaylistPending"
           @update:value="switchPlaylist"
-          :disabled="url === undefined"
+          :disabled="videoUrl === undefined"
         >
           <template #checked> 列表 </template>
           <template #unchecked> 单个 </template>
@@ -41,7 +41,7 @@
 
 <script setup lang="ts">
 import { useRoute } from "vue-router";
-import { ref, h, watch } from "vue";
+import { ref, h, watch, onMounted } from "vue";
 import {
   NDataTable,
   DataTableColumns,
@@ -54,6 +54,7 @@ import {
   NRadioGroup,
   NRadio,
   NSwitch,
+  useDialog,
 } from "naive-ui";
 import { DownloadSharp as DownloadIcon } from "@vicons/ionicons5";
 import { InternalRowData } from "naive-ui/es/data-table/src/interface";
@@ -76,11 +77,7 @@ type DownloadInfo = {
 };
 
 const route = useRoute();
-const query = route.query;
-let url: string | undefined;
-if (query["url"] != undefined) {
-  url = decodeURIComponent(query["url"] as string);
-}
+let videoUrl: string | undefined;
 const usePlaylist = ref(false);
 const switchPlaylistPending = ref(false);
 const loadingBar = useLoadingBar();
@@ -90,6 +87,7 @@ const downloadInfoMap: Map<string, DownloadInfo> = new Map();
 const mainTitle = ref<string>();
 const data = ref<RowData[]>([]);
 const downloadButtonContent = ref("下载");
+const dialog = useDialog();
 const columns: DataTableColumns<RowData> = [
   {
     type: "selection",
@@ -108,8 +106,30 @@ const videoInfoCache: {
   playlistVideoInfo: RowData[] | undefined;
 } = { singleVideoInfo: undefined, playlistVideoInfo: undefined };
 
-console.log("download Url: ", url);
-switchPlaylist(false);
+// 下载链接改变后，复用下载页面
+watch(
+  () => route.query.url,
+  async (url) => {
+    videoInfoCache.playlistVideoInfo = undefined;
+    videoInfoCache.singleVideoInfo = undefined;
+    downloadInfoMap.clear();
+    data.value = [];
+
+    if (url) {
+      videoUrl = decodeURIComponent(url as string);
+      console.log("download Url: ", videoUrl);
+      switchPlaylist(false);
+    }
+  }
+);
+
+onMounted(() => {
+  if (route.query.url) {
+    videoUrl = decodeURIComponent(route.query.url as string);
+    console.log("download Url: ", videoUrl);
+    switchPlaylist(false);
+  }
+});
 
 watch(data, () => {
   checkedRowKeys.value = [];
@@ -124,10 +144,10 @@ function switchPlaylist(value: boolean) {
     data.value = videoInfoCache.singleVideoInfo;
     usePlaylist.value = value;
     return;
-  } else if (url) {
+  } else if (videoUrl) {
     switchPlaylistPending.value = true;
     loadingBar.start();
-    fetchVideoInfo(url, value)
+    fetchVideoInfo(videoUrl, value)
       .then((result) => {
         data.value = result;
         loadingBar.finish();
@@ -217,6 +237,7 @@ function renderQualitySelecor(rowData: RowData) {
 async function download() {
   downloadRunning.value = true;
   let downloadIndex = 1;
+  let downloadSuccessCount = 0;
 
   if (usePlaylist.value) {
     for (let key of checkedRowKeys.value) {
@@ -231,6 +252,7 @@ async function download() {
             [downloadInfo.streamIndex],
             downloadInfo.playlistItemIndex.toString()
           );
+          downloadSuccessCount++;
         } catch (e) {
           console.error(e);
         }
@@ -247,6 +269,7 @@ async function download() {
       if (downloadInfo) {
         try {
           await downloadVideo(downloadInfo.url, [downloadInfo.streamIndex]);
+          downloadSuccessCount++;
         } catch (e) {
           console.error(e);
         }
@@ -259,7 +282,15 @@ async function download() {
   downloadButtonContent.value = "下载";
   downloadRunning.value = false;
 
-  utools.showNotification(`下载完成 ${checkedRowKeys.value.length} 个视频`);
+  dialog.success({
+    title: "下载完成",
+    content: `成功下载 ${downloadSuccessCount} 个视频`,
+    positiveText: "打开文件夹",
+    negativeText: "好的",
+    onPositiveClick: () => {
+      utools.shellOpenPath(setting.outputDir);
+    },
+  });
 }
 
 async function fetchVideoInfo(

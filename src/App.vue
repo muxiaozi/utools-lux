@@ -24,11 +24,9 @@
       </n-layout-sider>
       <n-layout>
         <n-dialog-provider>
-          <n-config-provider>
-            <n-loading-bar-provider>
-              <router-view></router-view>
-            </n-loading-bar-provider>
-          </n-config-provider>
+          <n-loading-bar-provider>
+            <router-view></router-view>
+          </n-loading-bar-provider>
         </n-dialog-provider>
       </n-layout>
     </n-layout>
@@ -44,7 +42,6 @@ import {
   NLayoutSider,
   NMenu,
   NDialogProvider,
-  NConfigProvider,
   NLoadingBarProvider,
 } from "naive-ui";
 import { RouterLink, useRouter } from "vue-router";
