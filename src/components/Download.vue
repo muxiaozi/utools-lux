@@ -143,7 +143,7 @@ onMounted(() => {
   }
 
   if (route.query.url) {
-    videoUrl = route.query.url as string;
+    videoUrl = decodeURIComponent(route.query.url as string);
     console.log("download Url: ", videoUrl);
     switchPlaylist(false);
   }

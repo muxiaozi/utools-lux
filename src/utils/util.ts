@@ -6,12 +6,4 @@ async function where(exe: string): Promise<string> {
   }
 }
 
-/**
- * 删除URL的查询参数
- * http://example.com?query=1 => http://example.com
- */
-function cleanupUrl(url: string): string {
-  return url.replace(/\?.*/, "");
-}
-
-export { where, cleanupUrl };
+export { where };
