@@ -2,6 +2,12 @@
 
 一款基于 [lux](https://github.com/iawia002/lux) 与 [uTools](https://u.tools/) 的视频下载工具
 
+## 待办
+
+- [ ] 使用系统代理
+- [ ] 偏好分辨率
+- [ ] 偏好编码
+
 ## 展示
 
 * 主页
